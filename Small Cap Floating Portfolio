@@ -1,0 +1,59 @@
+# region imports
+# setting up the universe of stocks
+# keep mind of the selection bias
+# Trading Strategy: stock cap stocks have outperformed large cap stocks; 200 most liquid stocks and then take bottom 10
+# Rebalance every month
+from AlgorithmImports import *
+# endregion
+
+class SwimmingAsparagusTermite(QCAlgorithm):
+
+    def Initialize(self):
+        self.SetStartDate(2020, 1, 1)  # Set Start Date
+        self.SetEndDate(2022, 1, 1)
+        self.SetCash(100000)
+        # rebalance time = minimum of set date
+        self.rebalanceTime = datetime.min
+        self.activeStocks = set()
+
+        # add to universe of stock with coarse filter and fine filter
+        self.AddUniverse(self.CoarseFilter, self.FineFilter)
+        self.UniverseSettings.Resolution = Resolution.Hour
+
+        self.portfolioTargets = []
+
+    def CoarseFilter(self, coarse):
+        # no need to rebalance within 1 month
+        if self.Time <= self.rebalanceTime:
+            return self.Universe.Unchanged
+        self.rebalanceTime = self.Time + timedelta(30) # add one month ahead
+
+        # filter stocks by dollarvolume
+        sortedByDollarVolume = sorted(coarse, key = lambda x: x.DollarVolume, reverse = True)
+
+        return [x.Symbol for x in sortedByDollarVolume if x.Price > 10 and x.HasFundamentalData][:200]
+
+    def FineFilter(self, fine):
+        sortedByPE = sorted(fine, key = lambda x: x.MarketCap)
+        return [x.Symbol for x in sortedByPE if x.MarketCap > 0][:20]
+
+    def OnSecuritiesChanged(self, changes):
+        for x in changes.RemovedSecurities:
+            self.Liquidate(x.Symbol)
+            self.activeStocks.remove(x.Symbol)
+
+        for x in changes.AddedSecurities:
+            self.activeStocks.add(x.Symbol)
+        
+        self.portfolioTargets = [PortfolioTarget(symbol, 1/len(self.activeStocks)) for symbol in self.activeStocks]
+
+    def OnData(self, data: Slice):
+        if self.portfolioTargets == []:
+            return
+
+        for symbol in self.activeStocks:
+            if symbol not in data:
+                return
+
+        self.SetHoldings(self.portfolioTargets)
+        self.portfolioTargets = []
