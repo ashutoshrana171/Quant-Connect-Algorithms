@@ -41,7 +41,7 @@ class Indicators(QCAlgorithm):
 
         self.Plot("Benchmark", "60m-High", high)
         self.Plot("Benchmark", "60m-Low", low)
-        self.Plot("Benchmark", "60m-High", self.sma.Current.Value)
+        self.Plot("Benchmark", "60m-High", self.sma.Current.Value) 
         
         
 
