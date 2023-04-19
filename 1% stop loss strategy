@@ -39,4 +39,4 @@ class FirstCode(QCAlgorithm):
         elif self.entryPrice*1.1 < price or self.entryPrice*0.9 > price:
             self.Liquidate()
             self.Log("SELL SPY @" + str(price))
-            self.nextEntryTime = self.Time + self.period
+            self.nextEntryTime = self.Time + self.period 
