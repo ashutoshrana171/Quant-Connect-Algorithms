@@ -56,4 +56,4 @@ class SwimmingAsparagusTermite(QCAlgorithm):
                 return
 
         self.SetHoldings(self.portfolioTargets)
-        self.portfolioTargets = [] 
+        self.portfolioTargets = []
