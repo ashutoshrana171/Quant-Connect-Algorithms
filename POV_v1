@@ -1,0 +1,36 @@
+from AlgorithmImports import *
+from QuantConnect.DataSource import *
+from QuantConnect.Data.UniverseSelection import *
+from datetime import timedelta
+
+class RetrospectiveRedOrangePenguin(QCAlgorithm):
+    def Initialize(self):
+        self.SetStartDate(2020, 1, 1)  # Set Start Date
+        self.SetEndDate(2023, 1, 1)  # Set Start Date 
+        self.SetCash(100000)  # Set starting capital
+        
+        self.symbol = self.AddEquity("AAPL").Symbol  # Add the equity you want to trade
+        
+        self.volume_percentage = 0.05  # Set the desired percentage of volume for trading
+        self.previous_volume = 0  # Variable to store the previous volume
+        
+        self.Schedule.On(self.DateRules.EveryDay(self.symbol),  # Schedule the function to run every day
+                         self.TimeRules.AfterMarketOpen(self.symbol, 60),  # 60 minutes after market open
+                         self.Rebalance)
+    
+    def Rebalance(self):
+        current_volume = self.Securities[self.symbol].Volume  # Get the current volume
+        
+        if self.previous_volume == 0:  # First iteration, set previous volume
+            self.previous_volume = current_volume
+            return
+        
+        volume_threshold = self.previous_volume * self.volume_percentage
+        
+        if current_volume > volume_threshold:  # If current volume exceeds the threshold, place a market order
+            self.MarketOrder(self.symbol, 100)
+        
+        self.previous_volume = current_volume  # Update previous volume for the next iteration
+    
+    def OnData(self, data):
+        pass
